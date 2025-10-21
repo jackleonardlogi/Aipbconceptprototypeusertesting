@@ -1,0 +1,290 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* Brown Logitech Pan - Official Logitech Fonts */
+@font-face {
+  font-family: 'Brown Logitech Pan';
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  src: url('https://www.logitech.com/_app/fonts/BrownLogitechWebPan-Light.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Brown Logitech Pan';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('https://www.logitech.com/_app/fonts/BrownLogitechWebPan-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Brown Logitech Pan';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('https://www.logitech.com/_app/fonts/BrownLogitechWebPan-Bold.woff2') format('woff2');
+}
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 1rem;
+  /* Typography variables */
+  --text-base: 1rem;
+  --text-xs: .78rem;
+  --font-weight-bold: 700;
+  --font-weight-normal: 400;
+  --line-height-tight: 100%;
+  --line-height-snug: 110%;
+  --line-height-normal: 116%;
+  --line-height-relaxed: 120%;
+  --line-height-tooltip: .78rem;
+  
+  /* The default background color for the application. */
+  --background: rgba(242, 242, 242, 0.88);
+  /* The default color for elements or text that appears on top of the background. */
+  --foreground: rgba(34, 36, 37, 1.00);
+  /* The background color for cards, modals, and other containers. */
+  --card: rgba(242, 242, 242, 0.88);
+  /* The default color for text or elements that appear on top of cards, modals and other background containers. */
+  --card-foreground: rgba(242, 242, 242, 1.00);
+  /* The background color for dropdowns and tooltips. */
+  --popover: rgba(244, 244, 244, 1.00);
+  /* The default color for text or elements that appear on top of dropdowns and tooltips. */
+  --popover-foreground: rgba(34, 36, 37, 1.00);
+  /* The primary color used for buttons, links, and other interactive elements. */
+  --primary: rgba(129, 78, 250, 1.00);
+  /* The default color for text or elements that appear on top of primary colored elements. */
+  --primary-foreground: rgba(255, 255, 255, 1.00);
+  /* The secondary color used for secondary(but NOT-DESTRUCTIVE) buttons and interactive elements. */
+  --secondary: rgba(0, 0, 0, 1.00);
+  /* The default color for text or elements that appear on top of secondary colored elements. */
+  --secondary-foreground:rgba(34, 36, 37, 1.00);
+  /* The muted color used for less prominent elements, such as disabled buttons or disabled text. */
+  --muted: rgba(217, 217, 217, 0.56);
+  /* The default color for text or elements that appear on top of muted colored elements. */
+  --muted-foreground: rgba(73, 80, 87, 1.00);
+  /* The accent color used for highlights, links, and other interactive elements. */
+  --accent: rgba(129, 78, 250, 1.00);
+  /* The default color for text or elements that appear on top of accent colored elements. */
+  --accent-foreground: rgba(255, 255, 255, 1.00);
+  /* The color used for background in destructive actions, such as delete buttons or error messages. */
+  --destructive: rgba(255, 41, 71, 1.00);
+  /* The default color for text or elements that appear on top of destructive colored elements. */
+  --destructive-foreground: rgba(255, 255, 255, 1.00);
+  /* The default border color for elements such as inputs, buttons, and other containers. */
+  --border: rgba(230, 230, 230, 1.00);
+  /* The default background color for input fields once the text has been filled. Should be either transparent or match the input-background. */
+  --input: rgba(0, 0, 0, 0);
+  /* The default background color for input fields, text areas, and other input elements. */
+  --input-background: rgba(255, 255, 255, 1.00);
+  /* The color for focus rings, outlines, and other focus indicators. */
+  --ring: rgba(129, 78, 250, 1.00);
+  /* Shadow for small elevations, such as cards or modals. */
+  --elevation-sm: 0 2px 4px rgba(0, 0, 0, 0.10);
+  /* Shadow for medium elevations, such as buttons or floating elements. */
+  --elevation-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+  /* The color for chart elements, such as a bar or line in a chart. */
+  --chart-1: rgba(129, 78, 250, 1.00);
+  /* The color for another chart element, such as a bar or line in a chart. */
+  --chart-2: rgba(154, 113, 251, 1.00);
+  /* The color for another chart element, such as a bar or line in a chart. */
+  --chart-3: rgba(205, 184, 253, 1.00);
+  /* The color for another chart element, such as a bar or line in a chart. */
+  --chart-4: rgba(230, 220, 254, 1.00);
+  /* The color for another chart element, such as a bar or line in a chart. */
+  --chart-5: rgba(249, 246, 255, 1.00);
+  /* The default border radius for elements such as buttons, tooltip, and other containers. */
+  --radius: 24px;
+  /* The border radius for tooltip elements. */
+  --radius-tooltip: 10px;
+  /* The background color for sidebars, navigation menus, and other persistent elements. */
+  --sidebar: rgba(255, 255, 255, 1.00);
+  /* The default color for text or elements that appear on top of sidebars, navigation menus, and other persistent elements. */
+  --sidebar-foreground: rgba(34, 36, 37, 1.00);
+  /* The primary color used for buttons, links, and other interactive elements in sidebars and navigation menus. */
+  --sidebar-primary: rgba(129, 78, 250, 1.00);
+  /* The default color for text or elements that appear on top of primary colored elements in sidebars and navigation menus. */
+  --sidebar-primary-foreground: rgba(255, 255, 255, 1.00);
+  /* The accent color used for highlights, links, and other interactive elements in sidebars and navigation menus. */
+  --sidebar-accent: rgba(242, 242, 242, 1.00);
+  /* The default color for text or elements that appear on top of accent colored elements in sidebars and navigation menus. */
+  --sidebar-accent-foreground: rgba(0, 0, 0, 1.00);
+  /* The default border color for elements in sidebars and navigation menus. */
+  --sidebar-border: rgba(230, 230, 230, 1.00);
+  /* The default color for focus rings, outlines, and other focus indicators in sidebars and navigation menus. */
+  --sidebar-ring: rgba(129, 78, 250, 1.00);
+}
+
+.dark {
+  --background: rgba(15, 15, 15, 1.00);
+  --foreground: rgba(255, 255, 255, 1.00);
+  --card: rgba(30, 30, 30, 1.00);
+  --card-foreground: rgba(255, 255, 255, 1.00);
+  --popover: rgba(40, 40, 40, 1.00);
+  --popover-foreground: rgba(255, 255, 255, 1.00);
+  --primary: rgba(129, 78, 250, 1.00);
+  --primary-foreground: rgba(255, 255, 255, 1.00);
+  --secondary: rgba(60, 60, 60, 1.00);
+  --secondary-foreground: rgba(255, 255, 255, 1.00);
+  --muted: rgba(60, 60, 60, 1.00);
+  --muted-foreground: rgba(170, 170, 170, 1.00);
+  --accent: rgba(129, 78, 250, 1.00);
+  --accent-foreground: rgba(255, 255, 255, 1.00);
+  --destructive: rgba(255, 41, 71, 1.00);
+  --destructive-foreground: rgba(255, 255, 255, 1.00);
+  --border: rgba(60, 60, 60, 1.00);
+  --input: rgba(0, 0, 0, 0);
+  --input-background: rgba(40, 40, 40, 1.00);
+  --ring: rgba(129, 78, 250, 1.00);
+  --elevation-sm: 0 2px 4px rgba(0, 0, 0, 0.30);
+  --elevation-md: 0 4px 8px rgba(0, 0, 0, 0.35);
+  --chart-1: rgba(129, 78, 250, 1.00);
+  --chart-2: rgba(154, 113, 251, 1.00);
+  --chart-3: rgba(205, 184, 253, 1.00);
+  --chart-4: rgba(230, 220, 254, 1.00);
+  --chart-5: rgba(249, 246, 255, 1.00);
+  --sidebar: rgba(20, 20, 20, 1.00);
+  --sidebar-foreground: rgba(255, 255, 255, 1.00);
+  --sidebar-primary: rgba(129, 78, 250, 1.00);
+  --sidebar-primary-foreground: rgba(255, 255, 255, 1.00);
+  --sidebar-accent: rgba(40, 40, 40, 1.00);
+  --sidebar-accent-foreground: rgba(255, 255, 255, 1.00);
+  --sidebar-border: rgba(60, 60, 60, 1.00);
+  --sidebar-ring: rgba(129, 78, 250, 1.00);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 14px);
+  --radius-md: calc(var(--radius) - 10px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-tooltip: var(--radius-tooltip);
+  --box-shadow-sm: var(--elevation-sm);
+  --box-shadow-md: var(--elevation-md);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/0;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Brown Logitech Pan', sans-serif;
+  }
+}
+
+h1 {
+  font-family: 'Brown Logitech Pan', sans-serif;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.5;
+}
+
+h2 {
+  font-family: 'Brown Logitech Pan', sans-serif;
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-snug);
+}
+
+h3 {
+  font-family: 'Brown Logitech Pan', sans-serif;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+h4 {
+  font-family: 'Brown Logitech Pan', sans-serif;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+p {
+  font-family: 'Brown Logitech Pan', sans-serif;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+span {
+  font-family: 'Brown Logitech Pan', sans-serif;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-normal);
+  line-height: 1.5;
+}
+
+label {
+  font-family: 'Brown Logitech Pan', sans-serif;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-snug);
+}
+
+button {
+  font-family: 'Brown Logitech Pan', sans-serif;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-normal);
+  line-height: 1.5;
+}
+
+input {
+  font-family: 'Brown Logitech Pan', sans-serif;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-normal);
+  line-height: 1.5;
+}
+
+.caption {
+  font-family: 'Brown Logitech Pan', sans-serif;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-relaxed);
+}
+
+.tooltip {
+  font-family: 'Brown Logitech Pan', sans-serif;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tooltip);
+}
+
+html {
+  font-size: var(--font-size);
+}
