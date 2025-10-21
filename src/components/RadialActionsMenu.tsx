@@ -112,7 +112,13 @@ const RadialActionsMenu: React.FC<RadialActionsMenuProps> = ({ version }) => {
     providerId: string;
     providerName: string;
     url: string;
+    promptText: string;
   }>>([]); // Track multiple temporary chat overlays (Version 2 only)
+  const [chatStates, setChatStates] = useState<Record<string, {
+    stage: 'typing' | 'sending' | 'responding' | 'complete';
+    userMessage: string;
+    aiResponse: string;
+  }>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   const recentDragRef = useRef<boolean>(false);
   const providerMenuRef = useRef<HTMLDivElement>(null);
@@ -782,75 +788,40 @@ const RadialActionsMenu: React.FC<RadialActionsMenuProps> = ({ version }) => {
     await new Promise(resolve => setTimeout(resolve, 800));
 
     const promptText = aiPrompt.trim();
-    const encodedPrompt = encodeURIComponent(promptText);
-
-    // Copy prompt to clipboard - this is our most reliable method
-    const copied = copyToClipboard(promptText);
-
-    if (copied) {
-      console.log('✅ Prompt copied to clipboard');
-    }
-
-    // Detect platform for keyboard shortcut display
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    const pasteShortcut = isMac ? 'Cmd+V' : 'Ctrl+V';
-
-    // Helper function to get the best URL for opening
-    const getProviderUrl = (providerId: string, provider: any): string => {
-      // For demo reliability, we'll try to use desktop app deep links when available
-      // These work better than web URLs for actually inserting prompts
-
-      switch (providerId) {
-        case 'chatgpt':
-          // Try desktop app first with proper deep link format
-          // Note: The exact deep link format varies by provider
-          return provider.desktopUrl || provider.url;
-
-        case 'perplexity':
-          // Perplexity may support search parameter
-          return `${provider.url}/search?q=${encodedPrompt}`;
-
-        case 'grok':
-          // Grok on X/Twitter
-          return provider.url;
-
-        default:
-          // For custom providers, use their URL as-is
-          return provider.url;
-      }
-    };
 
     if (version === 2) {
-      // Version 2: Show temporary chat overlays for each selected provider
+      // Version 2: Show simulated chat overlays for each selected provider
       const chats = selectedProviders.map(providerId => {
         const provider = aiProviders.find(p => p.id === providerId);
         if (!provider) return null;
 
-        const url = getProviderUrl(providerId, provider);
-
         return {
           providerId: provider.id,
           providerName: provider.name,
-          url: url,
-          promptText: promptText // Store prompt for display
+          url: provider.url,
+          promptText: promptText
         };
       }).filter(Boolean) as Array<{ providerId: string; providerName: string; url: string; promptText: string }>;
 
       setShowTemporaryChats(chats);
+
+      // Initialize chat states for auto-typing simulation
+      const initialStates: Record<string, any> = {};
+      chats.forEach(chat => {
+        initialStates[chat.providerId] = {
+          stage: 'typing',
+          userMessage: '',
+          aiResponse: ''
+        };
+      });
+      setChatStates(initialStates);
+
+      // Start auto-typing animation for each chat
+      chats.forEach((chat, index) => {
+        simulateChatInteraction(chat.providerId, chat.promptText, index * 200);
+      });
+
       setIsSending(false);
-
-      // Show helpful toast notification
-      if (copied) {
-        const providerNames = selectedProviders
-          .map(id => aiProviders.find(p => p.id === id)?.name)
-          .filter(Boolean)
-          .join(', ');
-
-        toast.success('Prompt copied to clipboard!', {
-          description: `Opening ${providerNames}. Paste with ${pasteShortcut} to send your prompt.`,
-          duration: 6000,
-        });
-      }
 
       // Dismiss the prompt overlay when temporary chats open
       setAiChatOpen(false);
@@ -858,30 +829,16 @@ const RadialActionsMenu: React.FC<RadialActionsMenuProps> = ({ version }) => {
       setProviderMenuView('main');
     } else {
       // Version 1: Open each selected provider in a new tab
-      const providerNames: string[] = [];
-
       selectedProviders.forEach(providerId => {
         const provider = aiProviders.find(p => p.id === providerId);
         if (provider) {
-          const url = getProviderUrl(providerId, provider);
-
-          // Try to open the provider
           try {
-            window.open(url, '_blank');
-            providerNames.push(provider.name);
+            window.open(provider.url, '_blank');
           } catch (error) {
             console.error(`Failed to open ${provider.name}:`, error);
           }
         }
       });
-
-      // Show helpful toast notification
-      if (copied && providerNames.length > 0) {
-        toast.success('Prompt copied to clipboard!', {
-          description: `Opening ${providerNames.join(', ')}. Paste with ${pasteShortcut} to send your prompt.`,
-          duration: 6000,
-        });
-      }
 
       // Reset after opening
       setTimeout(() => {
@@ -889,6 +846,83 @@ const RadialActionsMenu: React.FC<RadialActionsMenuProps> = ({ version }) => {
         setIsSending(false);
       }, 300);
     }
+  };
+
+  // Simulate typing and sending in the chat interface
+  const simulateChatInteraction = async (providerId: string, promptText: string, delay: number = 0) => {
+    await new Promise(resolve => setTimeout(resolve, delay));
+
+    // Stage 1: Auto-type the prompt
+    const typingSpeed = 30; // ms per character
+    for (let i = 0; i <= promptText.length; i++) {
+      setChatStates(prev => ({
+        ...prev,
+        [providerId]: {
+          ...prev[providerId],
+          stage: 'typing',
+          userMessage: promptText.substring(0, i)
+        }
+      }));
+      await new Promise(resolve => setTimeout(resolve, typingSpeed));
+    }
+
+    // Stage 2: Click send (brief pause)
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setChatStates(prev => ({
+      ...prev,
+      [providerId]: {
+        ...prev[providerId],
+        stage: 'sending'
+      }
+    }));
+
+    // Stage 3: Show AI is responding
+    await new Promise(resolve => setTimeout(resolve, 800));
+    setChatStates(prev => ({
+      ...prev,
+      [providerId]: {
+        ...prev[providerId],
+        stage: 'responding'
+      }
+    }));
+
+    // Stage 4: Type AI response
+    const aiResponse = getSimulatedResponse(providerId, promptText);
+    const responseTypingSpeed = 20;
+
+    await new Promise(resolve => setTimeout(resolve, 600));
+
+    for (let i = 0; i <= aiResponse.length; i++) {
+      setChatStates(prev => ({
+        ...prev,
+        [providerId]: {
+          ...prev[providerId],
+          stage: 'responding',
+          aiResponse: aiResponse.substring(0, i)
+        }
+      }));
+      await new Promise(resolve => setTimeout(resolve, responseTypingSpeed));
+    }
+
+    // Complete
+    setChatStates(prev => ({
+      ...prev,
+      [providerId]: {
+        ...prev[providerId],
+        stage: 'complete'
+      }
+    }));
+  };
+
+  // Generate simulated AI responses
+  const getSimulatedResponse = (providerId: string, prompt: string): string => {
+    const responses: Record<string, string> = {
+      'chatgpt': `I'll help you with that! Based on your request "${prompt.substring(0, 50)}${prompt.length > 50 ? '...' : ''}", here's what I can suggest:\n\nThis is a simulated response from ChatGPT for demonstration purposes. In a real implementation, this would connect to OpenAI's API and provide actual AI-generated responses.`,
+      'perplexity': `Searching for information about "${prompt.substring(0, 50)}${prompt.length > 50 ? '...' : ''}"...\n\nBased on current web sources, here's what I found:\n\nThis is a simulated Perplexity response for demonstration. Perplexity typically provides AI-powered answers with cited sources from across the web.`,
+      'grok': `Hey! Let me address "${prompt.substring(0, 50)}${prompt.length > 50 ? '...' : ''}"...\n\nThis is a simulated Grok response for demonstration. Grok brings a unique perspective with real-time information and a bit of wit!`
+    };
+
+    return responses[providerId] || `Response to: ${prompt}`;
   };
 
   // Helper function to infer provider name from URL
@@ -4112,139 +4146,102 @@ const RadialActionsMenu: React.FC<RadialActionsMenuProps> = ({ version }) => {
                   </div>
                 </div>
                 
-                {/* AI Provider Web UI Placeholder */}
-                <div data-layer="AI Web UI" className="AiWebUi" style={{alignSelf: 'stretch', height: 518.60, position: 'relative', overflow: 'hidden', borderRadius: 16, backgroundColor: '#FFFFFF', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16}}>
-                  {/* Provider Icon */}
+                {/* AI Provider iframe - Actual Provider Website */}
+                <div data-layer="AI Web UI" className="AiWebUi" style={{alignSelf: 'stretch', height: 518.60, position: 'relative', overflow: 'hidden', borderRadius: 16, backgroundColor: '#FFFFFF'}}>
+                  <iframe
+                    src={chat.url}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                      borderRadius: '16px'
+                    }}
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                    title={`${chat.providerName} Interface`}
+                  />
+                  {/* Overlay message if iframe is blocked */}
                   <div style={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: '100px',
-                    backgroundColor: '#F2F2F2',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(255, 255, 255, 0.95)',
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: 'var(--elevation-sm)'
-                  }}>
-                    {chat.providerId === 'chatgpt' ? <ChatGPTIcon /> : chat.providerId === 'perplexity' ? <PerplexityIcon /> : <GrokIcon />}
-                  </div>
-                  
-                  {/* Provider Name */}
-                  <div style={{
-                    color: '#222425',
-                    fontSize: '20px',
-                    fontFamily: 'Brown Logitech Pan',
-                    fontWeight: '700',
-                    lineHeight: '24px',
-                    textAlign: 'center'
-                  }}>
-                    {chat.providerName}
-                  </div>
-
-                  {/* Instruction Banner */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3, duration: 0.5 }}
-                    style={{
-                      maxWidth: '400px',
-                      padding: '16px 24px',
-                      background: 'linear-gradient(135deg, #814EFA 0%, #9D6EFF 100%)',
-                      borderRadius: '16px',
-                      boxShadow: '0 4px 12px rgba(129, 78, 250, 0.2)',
-                      textAlign: 'center'
-                    }}
+                    gap: '16px',
+                    padding: '24px',
+                    pointerEvents: 'none',
+                    opacity: 0
+                  }}
+                    className="iframe-fallback"
                   >
                     <div style={{
-                      color: 'white',
+                      width: 48,
+                      height: 48,
+                      borderRadius: '100px',
+                      backgroundColor: '#F2F2F2',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {chat.providerId === 'chatgpt' ? <ChatGPTIcon /> : chat.providerId === 'perplexity' ? <PerplexityIcon /> : <GrokIcon />}
+                    </div>
+                    <div style={{
+                      color: '#222',
                       fontSize: '16px',
                       fontFamily: 'Brown Logitech Pan',
                       fontWeight: '700',
-                      lineHeight: '20px',
-                      marginBottom: '8px'
+                      textAlign: 'center'
                     }}>
-                      Prompt Ready to Paste!
+                      Unable to embed {chat.providerName}
                     </div>
                     <div style={{
-                      color: 'rgba(255, 255, 255, 0.95)',
+                      color: '#666',
                       fontSize: '14px',
                       fontFamily: 'Brown Logitech Pan',
-                      fontWeight: '400',
-                      lineHeight: '18px',
-                      marginBottom: '12px'
+                      textAlign: 'center',
+                      maxWidth: '300px'
                     }}>
-                      Your prompt has been copied to clipboard
+                      {chat.providerName} doesn't allow embedding. Your prompt has been copied to clipboard.
                     </div>
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 16px',
-                      background: 'rgba(255, 255, 255, 0.2)',
-                      borderRadius: '8px',
-                      backdropFilter: 'blur(10px)'
-                    }}>
-                      <kbd style={{
-                        color: 'white',
-                        fontSize: '14px',
-                        fontFamily: 'Brown Logitech Pan',
-                        fontWeight: '600',
-                        padding: '4px 8px',
-                        background: 'rgba(0, 0, 0, 0.2)',
-                        borderRadius: '4px',
-                        border: '1px solid rgba(255, 255, 255, 0.3)'
-                      }}>
-                        {navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}
-                      </kbd>
-                      <span style={{ color: 'white', fontSize: '14px', fontWeight: '600' }}>+</span>
-                      <kbd style={{
-                        color: 'white',
-                        fontSize: '14px',
-                        fontFamily: 'Brown Logitech Pan',
-                        fontWeight: '600',
-                        padding: '4px 8px',
-                        background: 'rgba(0, 0, 0, 0.2)',
-                        borderRadius: '4px',
-                        border: '1px solid rgba(255, 255, 255, 0.3)'
-                      }}>
-                        V
-                      </kbd>
-                      <span style={{ color: 'white', fontSize: '14px', marginLeft: '4px' }}>to paste</span>
-                    </div>
-                  </motion.div>
-
-                  {/* Open in Browser Button */}
-                  <motion.button
-                    onClick={() => {
-                      if (chat.url) {
+                    <motion.button
+                      onClick={() => {
+                        copyToClipboard(chat.promptText);
                         window.open(chat.url, '_blank');
-                      }
-                    }}
-                    style={{
-                      marginTop: '12px',
-                      padding: '12px 24px',
-                      background: '#814EFA',
-                      borderRadius: '12px',
-                      border: 'none',
-                      color: 'white',
-                      fontSize: '14px',
-                      fontFamily: 'Brown Logitech Pan',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      boxShadow: '0 2px 8px rgba(129, 78, 250, 0.3)'
-                    }}
-                    whileHover={{
-                      scale: 1.05,
-                      boxShadow: '0 4px 12px rgba(129, 78, 250, 0.4)'
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <ExternalLink size={16} />
-                    <span>Open {chat.providerName}</span>
-                  </motion.button>
+                      }}
+                      style={{
+                        pointerEvents: 'auto',
+                        padding: '12px 24px',
+                        background: '#814EFA',
+                        borderRadius: '12px',
+                        border: 'none',
+                        color: 'white',
+                        fontSize: '14px',
+                        fontFamily: 'Brown Logitech Pan',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <ExternalLink size={16} />
+                      <span>Open {chat.providerName} in New Tab</span>
+                    </motion.button>
+                  </div>
                 </div>
+                <style>{`
+                  .AiWebUi iframe:not([src]) ~ .iframe-fallback,
+                  .AiWebUi iframe[src="about:blank"] ~ .iframe-fallback {
+                    opacity: 1 !important;
+                    pointer-events: auto !important;
+                  }
+                `}</style>
                   </motion.div>
                 </div>
               );
