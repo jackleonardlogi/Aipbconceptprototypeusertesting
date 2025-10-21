@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  X, 
-  Edit3, 
-  Copy, 
-  Trash2, 
-  Share2, 
-  Download, 
-  Star, 
+import {
+  X,
+  Edit3,
+  Copy,
+  Trash2,
+  Share2,
+  Download,
+  Star,
   Heart,
   Settings,
   Send,
@@ -18,6 +18,7 @@ import {
   Zap,
   ArrowLeft
 } from 'lucide-react';
+import { toast } from 'sonner';
 import svgPaths from '../imports/svg-sou2kf4koy';
 import IconOptionsUpload from '../imports/IconOptionsUpload';
 import IconClaudeLogoMark from '../imports/IconClaudeLogoMark';
@@ -774,55 +775,59 @@ const RadialActionsMenu: React.FC<RadialActionsMenuProps> = ({ version }) => {
 
   const sendMessage = async () => {
     if (!aiPrompt.trim() || isSending || selectedProviders.length === 0) return;
-    
+
     setIsSending(true);
-    
+
     // Beautiful send animation delay
     await new Promise(resolve => setTimeout(resolve, 800));
-    
+
     const promptText = aiPrompt.trim();
     const encodedPrompt = encodeURIComponent(promptText);
-    
-    // Copy prompt to clipboard as fallback
+
+    // Copy prompt to clipboard - this is our most reliable method
     const copied = copyToClipboard(promptText);
-    
+
     if (copied) {
-      console.log('✅ Prompt copied to clipboard as fallback');
+      console.log('✅ Prompt copied to clipboard');
     }
-    
-    // Helper function to construct URL with prompt parameter
-    const constructPromptUrl = (providerId: string, baseUrl: string): string => {
-      // Try different URL schemes that various providers might support
+
+    // Detect platform for keyboard shortcut display
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const pasteShortcut = isMac ? 'Cmd+V' : 'Ctrl+V';
+
+    // Helper function to get the best URL for opening
+    const getProviderUrl = (providerId: string, provider: any): string => {
+      // For demo reliability, we'll try to use desktop app deep links when available
+      // These work better than web URLs for actually inserting prompts
+
       switch (providerId) {
         case 'chatgpt':
-          // ChatGPT doesn't officially support URL parameters for prompts
-          // But we'll try the most common patterns that users might expect
-          return `${baseUrl}?q=${encodedPrompt}`;
-        
+          // Try desktop app first with proper deep link format
+          // Note: The exact deep link format varies by provider
+          return provider.desktopUrl || provider.url;
+
         case 'perplexity':
-          // Perplexity supports 'q' parameter for queries
-          return `${baseUrl}?q=${encodedPrompt}`;
-        
+          // Perplexity may support search parameter
+          return `${provider.url}/search?q=${encodedPrompt}`;
+
         case 'grok':
-          // Grok may support 'q' parameter for queries
-          return `${baseUrl}?q=${encodedPrompt}`;
-        
+          // Grok on X/Twitter
+          return provider.url;
+
         default:
-          // For custom providers, try common parameter names
-          // This covers most AI chat interfaces
-          return `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}q=${encodedPrompt}`;
+          // For custom providers, use their URL as-is
+          return provider.url;
       }
     };
-    
+
     if (version === 2) {
       // Version 2: Show temporary chat overlays for each selected provider
       const chats = selectedProviders.map(providerId => {
         const provider = aiProviders.find(p => p.id === providerId);
         if (!provider) return null;
-        
-        // Construct URL with prompt parameter
-        const url = constructPromptUrl(providerId, provider.url);
-        
+
+        const url = getProviderUrl(providerId, provider);
+
         return {
           providerId: provider.id,
           providerName: provider.name,
@@ -830,28 +835,58 @@ const RadialActionsMenu: React.FC<RadialActionsMenuProps> = ({ version }) => {
           promptText: promptText // Store prompt for display
         };
       }).filter(Boolean) as Array<{ providerId: string; providerName: string; url: string; promptText: string }>;
-      
+
       setShowTemporaryChats(chats);
       setIsSending(false);
-      
+
+      // Show helpful toast notification
+      if (copied) {
+        const providerNames = selectedProviders
+          .map(id => aiProviders.find(p => p.id === id)?.name)
+          .filter(Boolean)
+          .join(', ');
+
+        toast.success('Prompt copied to clipboard!', {
+          description: `Opening ${providerNames}. Paste with ${pasteShortcut} to send your prompt.`,
+          duration: 6000,
+        });
+      }
+
       // Dismiss the prompt overlay when temporary chats open
       setAiChatOpen(false);
       setShowProviderSelector(false);
       setProviderMenuView('main');
     } else {
-      // Version 1: Open each selected provider in a new tab with prompt in URL
+      // Version 1: Open each selected provider in a new tab
+      const providerNames: string[] = [];
+
       selectedProviders.forEach(providerId => {
         const provider = aiProviders.find(p => p.id === providerId);
         if (provider) {
-          // Construct URL with prompt parameter
-          const url = constructPromptUrl(providerId, provider.url);
-          window.open(url, '_blank');
+          const url = getProviderUrl(providerId, provider);
+
+          // Try to open the provider
+          try {
+            window.open(url, '_blank');
+            providerNames.push(provider.name);
+          } catch (error) {
+            console.error(`Failed to open ${provider.name}:`, error);
+          }
         }
       });
-      
+
+      // Show helpful toast notification
+      if (copied && providerNames.length > 0) {
+        toast.success('Prompt copied to clipboard!', {
+          description: `Opening ${providerNames.join(', ')}. Paste with ${pasteShortcut} to send your prompt.`,
+          duration: 6000,
+        });
+      }
+
       // Reset after opening
       setTimeout(() => {
         closeAiChat();
+        setIsSending(false);
       }, 300);
     }
   };
@@ -4104,6 +4139,111 @@ const RadialActionsMenu: React.FC<RadialActionsMenuProps> = ({ version }) => {
                   }}>
                     {chat.providerName}
                   </div>
+
+                  {/* Instruction Banner */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                    style={{
+                      maxWidth: '400px',
+                      padding: '16px 24px',
+                      background: 'linear-gradient(135deg, #814EFA 0%, #9D6EFF 100%)',
+                      borderRadius: '16px',
+                      boxShadow: '0 4px 12px rgba(129, 78, 250, 0.2)',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <div style={{
+                      color: 'white',
+                      fontSize: '16px',
+                      fontFamily: 'Brown Logitech Pan',
+                      fontWeight: '700',
+                      lineHeight: '20px',
+                      marginBottom: '8px'
+                    }}>
+                      Prompt Ready to Paste!
+                    </div>
+                    <div style={{
+                      color: 'rgba(255, 255, 255, 0.95)',
+                      fontSize: '14px',
+                      fontFamily: 'Brown Logitech Pan',
+                      fontWeight: '400',
+                      lineHeight: '18px',
+                      marginBottom: '12px'
+                    }}>
+                      Your prompt has been copied to clipboard
+                    </div>
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 16px',
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      borderRadius: '8px',
+                      backdropFilter: 'blur(10px)'
+                    }}>
+                      <kbd style={{
+                        color: 'white',
+                        fontSize: '14px',
+                        fontFamily: 'Brown Logitech Pan',
+                        fontWeight: '600',
+                        padding: '4px 8px',
+                        background: 'rgba(0, 0, 0, 0.2)',
+                        borderRadius: '4px',
+                        border: '1px solid rgba(255, 255, 255, 0.3)'
+                      }}>
+                        {navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}
+                      </kbd>
+                      <span style={{ color: 'white', fontSize: '14px', fontWeight: '600' }}>+</span>
+                      <kbd style={{
+                        color: 'white',
+                        fontSize: '14px',
+                        fontFamily: 'Brown Logitech Pan',
+                        fontWeight: '600',
+                        padding: '4px 8px',
+                        background: 'rgba(0, 0, 0, 0.2)',
+                        borderRadius: '4px',
+                        border: '1px solid rgba(255, 255, 255, 0.3)'
+                      }}>
+                        V
+                      </kbd>
+                      <span style={{ color: 'white', fontSize: '14px', marginLeft: '4px' }}>to paste</span>
+                    </div>
+                  </motion.div>
+
+                  {/* Open in Browser Button */}
+                  <motion.button
+                    onClick={() => {
+                      if (chat.url) {
+                        window.open(chat.url, '_blank');
+                      }
+                    }}
+                    style={{
+                      marginTop: '12px',
+                      padding: '12px 24px',
+                      background: '#814EFA',
+                      borderRadius: '12px',
+                      border: 'none',
+                      color: 'white',
+                      fontSize: '14px',
+                      fontFamily: 'Brown Logitech Pan',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 2px 8px rgba(129, 78, 250, 0.3)'
+                    }}
+                    whileHover={{
+                      scale: 1.05,
+                      boxShadow: '0 4px 12px rgba(129, 78, 250, 0.4)'
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <ExternalLink size={16} />
+                    <span>Open {chat.providerName}</span>
+                  </motion.button>
                 </div>
                   </motion.div>
                 </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import RadialActionsMenu from './components/RadialActionsMenu';
+import { Toaster } from 'sonner';
 
 function App() {
   const [version, setVersion] = useState<1 | 2>(1);
@@ -19,6 +20,7 @@ function App() {
       <div className="absolute inset-0 bg-black/10" />
 
       <RadialActionsMenu version={version} />
+      <Toaster position="top-center" richColors />
 
       {/* Version Toggle Button */}
       <motion.button
